@@ -1,4 +1,5 @@
-(use '(clojure.contrib server-socket duck-streams str-utils seq-utils stacktrace))
+(ns urkle.main
+  (:use [clojure.contrib server-socket duck-streams str-utils seq-utils stacktrace]))
 
 (declare *users* *channels* *name* server-name)
 

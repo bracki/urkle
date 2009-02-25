@@ -13,6 +13,10 @@ Commands supported so far:
 
 To launch it:
 
-    java -cp /path/to/clojure.jar;/path/to/clojure-contrib.jar clojure.main urkle.clj
+    java -cp /path/to/clojure.jar;/path/to/clojure-contrib.jar:. clojure.main urkle/main.clj
+
+Or run the tests:
+
+    java -cp /path/to/clojure.jar;/path/to/clojure-contrib.jar:. clojure.main urkle/test.clj
 
 Enjoy.
