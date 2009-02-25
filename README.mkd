@@ -1,7 +1,7 @@
 Urkle - The awkward IRCd
 =========================
 
-Actually this is just *clojure* target practice. This server tries to be somewhat RFC 1459 compliant but only in an awkward, make shift way.
+Actually this is just *clojure* target practice. This server tries to be somewhat [RFC 1459](http://tools.ietf.org/html/rfc1459) compliant but only in an awkward, make shift way.
 Commands supported so far:
 
 * NICK
@@ -13,7 +13,6 @@ Commands supported so far:
 
 To launch it:
 
-  java -cp /path/to/clojure.jar;/path/to/clojure-contrib.jar clojure.main urkle.clj
+    java -cp /path/to/clojure.jar;/path/to/clojure-contrib.jar clojure.main urkle.clj
 
 Enjoy.
-
