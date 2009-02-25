@@ -6,9 +6,11 @@
 
 (def *channels* (ref {}))
 
-(def server-name "werner.coremedia.com")
+(def server-name
+  (.getCanonicalHostName (java.net.InetAddress/getLocalHost)))
 
-
+;Taken from http://clj-me.blogspot.com/2009/01/try-or-or-try-try-else-or-else-try.html
+;as hinted on #clojure.
 (defmacro try-or
   "Evaluates exprs one at a time, from left to right. If a form returns a 
   value, this value is returned. If a form throws an exception, the next 
@@ -111,7 +113,7 @@
   (println
     (reply :rpl_welcome  *name* "This is Urkle IRC. The awkward ircd written in Clojure."))
   (println
-    (reply :rpl_yourhost  *name* "Your host is werner.coremedia.com running super alpha stuff.")))
+    (reply :rpl_yourhost  *name* (str-join " " ["Your host is" server-name "running super alpha stuff."]))))
 
 (defmethod relay "PRIVMSG" [msg]
   (let [recipient (:params msg)]
