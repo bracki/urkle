@@ -27,6 +27,10 @@
 
 (defstruct message :prefix :command :params :trailing)
 
+(defstruct channel :topic :users)
+
+
+
 ;Replies and Errors. See e.g. http://www.mirc-support.de/reference/raw.nameidx.htm
 (def replies 
   {:rpl_welcome 1
@@ -43,19 +47,19 @@
 (defn reply
   "Send a reply like:
   001 bracki :Your welcome!"
-  ([reply msg]
+  ([reply trailing]
           (str-join " " 
                     (vals (struct-map message 
                                 :prefix (str ":" server-name)
                                 :command (format "%03d" (reply replies))
-                                :trailing (str ":" msg)))))
-  ([reply recipient msg]
+                                :trailing (str ":" trailing)))))
+  ([reply params trailing]
           (str-join " " 
                     (vals (struct-map message 
                                 :prefix (str ":" server-name)
                                 :command (format "%03d" (reply replies))
-                                :params recipient
-                                :trailing (str ":" msg))))))
+                                :params params
+                                :trailing (str ":" trailing))))))
 
 (defn re-prefix [msg]
   "Find a <prefix>."
@@ -105,10 +109,10 @@
 (defmethod relay "JOIN" [msg]
   "Join a channel or create it"
   (dosync
-    (let [channel (:params msg)]
-    (if (contains? @*channels* (keyword channel))
-      (commute *channels* update-in [(keyword channel)] conj (keyword *name*)) 
-      (commute *channels* conj {(keyword channel) #{(keyword *name*)}})))))
+    (let [chan (:params msg)]
+    (if (contains? @*channels* (keyword chan))
+      (commute *channels* update-in [(keyword chan) :users] conj (keyword *name*)) 
+      (commute *channels* assoc-in [(keyword chan)] (struct-map channel :users #{(keyword *name*)}))))))
 
 (defmethod relay "USER" [msg]
   (println
@@ -122,7 +126,7 @@
     (let [message (str-join " " (vals (merge msg {:prefix (str ":" *name*)})))]
       (if (.startsWith recipient "#")
         ;Let's assume we have a channel
-        (doseq [user (clojure.set/difference ((keyword recipient) @*channels*) #{(keyword *name*)})]
+        (doseq [user (clojure.set/difference (:users ((keyword recipient) @*channels*)) #{(keyword *name*)})]
           (binding [*out* (user @*users*)]
             (println message)))
         ;Just PRIVMSGing a user
@@ -133,8 +137,8 @@
   "LIST all known channels."
   (println (reply :rpl_liststart  (str *name* " " "Channel") "Users Topic"))
   (when (not (empty? @*channels*))
-    (doseq [channel @*channels*]
-      (println (reply :rpl_list (str *name* " " (name (key channel)) " " (count (val channel))) ""))))  
+    (doseq [chan @*channels*]
+      (println (reply :rpl_list (str *name* " " (name (key chan)) " " (count (:users (val chan)))) ""))))
   (println (reply :rpl_listend *name* "End of /LIST")))
 
 (defn- urkle-handle-client [in out]
