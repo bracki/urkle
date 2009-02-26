@@ -27,7 +27,7 @@
 
 (defstruct message :prefix :command :params :trailing)
 
-;Replies and Errors. See e.g. http://www.mirc-support.de/reference/raw.nameidx.htm"
+;Replies and Errors. See e.g. http://www.mirc-support.de/reference/raw.nameidx.htm
 (def replies 
   {:rpl_welcome 1
    :rpl_yourhost 2
@@ -108,7 +108,7 @@
     (let [channel (:params msg)]
     (if (contains? @*channels* (keyword channel))
       (commute *channels* update-in [(keyword channel)] conj (keyword *name*)) 
-      (commute *channels* conj {(keyword channel) [(keyword *name*)]})))))
+      (commute *channels* conj {(keyword channel) #{(keyword *name*)}})))))
 
 (defmethod relay "USER" [msg]
   (println
@@ -117,12 +117,15 @@
     (reply :rpl_yourhost  *name* (str-join " " ["Your host is" server-name "running super alpha stuff."]))))
 
 (defmethod relay "PRIVMSG" [msg]
+  "PRIVMSG user|#channel."
   (let [recipient (:params msg)]
     (let [message (str-join " " (vals (merge msg {:prefix (str ":" *name*)})))]
       (if (.startsWith recipient "#")
-        (doseq [user ((keyword recipient) @*channels*)]
+        ;Let's assume we have a channel
+        (doseq [user (clojure.set/difference ((keyword recipient) @*channels*) #{(keyword *name*)})]
           (binding [*out* (user @*users*)]
             (println message)))
+        ;Just PRIVMSGing a user
         (binding [*out* ((keyword recipient) @*users*)]
           (println message))))))
 
