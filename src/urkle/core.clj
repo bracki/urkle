@@ -1,6 +1,6 @@
 (ns urkle.core
-  (:use [clojure.string :as str :only [join]])
-  (:use [clojure.set])
+  (:use [clojure.string :only [join]])
+  (:use [clojure.set :only [difference]])
   (:use [server.socket]))
 
 (declare *users* *channels* *name* server-name)
@@ -50,13 +50,13 @@
   "Send a reply like:
   001 bracki :Your welcome!"
   ([reply trailing]
-          (str/join " " 
+          (join " " 
                     (vals (struct-map message 
                                 :prefix (str ":" server-name)
                                 :command (format "%03d" (reply replies))
                                 :trailing (str ":" trailing)))))
   ([reply params trailing]
-          (str/join " " 
+          (join " " 
                     (vals (struct-map message 
                                 :prefix (str ":" server-name)
                                 :command (format "%03d" (reply replies))
@@ -99,7 +99,7 @@
 (defmethod relay "PING" [msg]
   "Answer with PONG."
   (println
-    (str/join " "
+    (join " "
               (vals (merge msg {:prefix (str ":" server-name) :command "PONG" :trailing (str ":" *name*)})))))
 
 (defmethod relay "NICK" [msg]
@@ -120,15 +120,15 @@
   (println
     (reply :rpl_welcome  *name* "This is Urkle IRC. The awkward ircd written in Clojure."))
   (println
-    (reply :rpl_yourhost  *name* (str/join " " ["Your host is" server-name "running super alpha stuff."]))))
+    (reply :rpl_yourhost  *name* (join " " ["Your host is" server-name "running super alpha stuff."]))))
 
 (defmethod relay "PRIVMSG" [msg]
   "PRIVMSG user|#channel."
   (let [recipient (:params msg)]
-    (let [message (str/join " " (vals (merge msg {:prefix (str ":" *name*)})))]
+    (let [message (join " " (vals (merge msg {:prefix (str ":" *name*)})))]
       (if (.startsWith recipient "#")
         ;Let's assume we have a channel
-        (doseq [user (clojure.set/difference (:users ((keyword recipient) @*channels*)) #{(keyword *name*)})]
+        (doseq [user (difference (:users ((keyword recipient) @*channels*)) #{(keyword *name*)})]
           (binding [*out* (user @*users*)]
             (println message)))
         ;Just PRIVMSGing a user
@@ -144,12 +144,12 @@
   (println (reply :rpl_listend *name* "End of /LIST")))
 
 (defn- urkle-handle-client [in out]
-  (binding [*in* (reader in)
-            *out* (writer out)]
+  (binding [*in* (in)
+            *out* (out)]
     (binding [*name* (relay (parse-msg (read-line)))]
       (loop [input (read-line)]
         (when input
           (relay (parse-msg input))
           (recur (read-line)))))))
 
-(defonce server (create-server 3333 urkle-handle-client))
+(defonce -main (create-server 3333 urkle-handle-client))
