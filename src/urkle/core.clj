@@ -2,12 +2,17 @@
   (:use [clojure.string :only [join]])
   (:use [clojure.set :only [difference]])
   (:use [server.socket]))
+(import '[java.io BufferedReader InputStreamReader OutputStreamWriter])
 
-(declare *users* *channels* *name* server-name)
+(declare ^:dynamic *users*)
+(declare ^:dynamic *channels*)
+(declare ^:dynamic *users*)
+(declare ^:dynamic *name*)
+(declare server-name)
 
-(def *users* (ref {}))
+(def ^:dynamic *users* (ref {}))
 
-(def *channels* (ref {}))
+(def ^:dynamic *channels* (ref {}))
 
 (def server-name
   (.getCanonicalHostName (java.net.InetAddress/getLocalHost)))
@@ -144,12 +149,13 @@
   (println (reply :rpl_listend *name* "End of /LIST")))
 
 (defn- urkle-handle-client [in out]
-  (binding [*in* (in)
-            *out* (out)]
+  (binding [*in* (BufferedReader. (InputStreamReader. in))
+            *out* (OutputStreamWriter. out)]
     (binding [*name* (relay (parse-msg (read-line)))]
       (loop [input (read-line)]
         (when input
           (relay (parse-msg input))
           (recur (read-line)))))))
 
-(defonce -main (create-server 3333 urkle-handle-client))
+(defn -main [] 
+  (create-server 6667 urkle-handle-client))
