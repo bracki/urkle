@@ -1,6 +1,7 @@
 (ns urkle.core
   (:use [clojure.string :only [join]])
   (:use [clojure.set :only [difference]])
+  (:use [clojure.tools.logging :only (info error)])
   (:use [server.socket]))
 (import '[java.io BufferedReader InputStreamReader OutputStreamWriter])
 
@@ -99,6 +100,7 @@
 
 (defmethod relay :default [msg]
   "Unkown Command."
+  (error msg)
   (println (reply :err_unkowncommand (:command msg) "Unknown Command.")))
 
 (defmethod relay "PING" [msg]
